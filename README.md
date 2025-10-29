@@ -19,6 +19,24 @@ Shop Ahora is a shopping store that allows users to browse and purchase products
 - Order creation and tracking functionality
 - Responsive design for mobile and desktop
 
+## Environment Variables
+
+Create a `.env` file in the root directory of the project and add the following variables:
+
+- `NEXT_PUBLIC_BASE_URL`: The base URL of the application
+- `MONGODB_URI`: The URI for your MongoDB database
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Your Clerk publishable key
+- `CLERK_SECRET_KEY`: Your Clerk secret key
+- `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL`: The URL to redirect to after signing up
+- `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name
+- `CLOUDINARY_API_KEY`: Your Cloudinary API key
+- `CLOUDINARY_API_SECRET`: Your Cloudinary API secret
+- `NEXT_PUBLIC_CURRENCY`: The currency to use for the application (default is USD)
+
+## Deployment
+
+To deploy the application, you can use any hosting service that supports Node.js and MongoDB.
+
 ## Screenshots
 
 <div>
