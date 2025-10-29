@@ -1,103 +1,207 @@
-import Image from "next/image";
+"use client";
+
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import ProductCard from "@/components/ProductCard";
+import Filter from "@/components/Filter";
+import { useMemo, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useAppContext } from "@/contexts/AppContext";
+import { Loader2Icon } from "lucide-react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortOption, setSortOption] = useState("default");
+  const searchTerm = useSearchParams().get("search") || "";
+  const { products, productsLoading } = useAppContext();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // function to capitalize the first letter of each word in a string
+  function upperCaseFirstLetter(str: String) {
+    const words = str.split(" ");
+
+    for (let i = 0; i < words.length; i++) {
+      words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+    }
+
+    return words.join(" ");
+  }
+
+  // products that are higlighted on the homepage
+  // based on the `highlight` property in the product data
+  const highlightedProducts = useMemo(() => {
+    return products.filter((product) => product.highlight);
+  }, [products]);
+
+  // stoponinteraction is set to false to allow autoplay to continue,
+  // even when the user interacts with the carousel,
+  // but can be set to true if you want to pause autoplay on interaction.
+  const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: false }));
+
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        products
+          .map((product) => product.category)
+          .filter(
+            (category): category is string => typeof category === "string"
+            // ensure category is a string
+            // and not undefined or null
+          )
+      )
+    );
+
+    return ["All", ...uniqueCategories];
+  }, [products]);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...products];
+
+    // filter by both search term and
+    // selected category if both are provided
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchLower) ||
+          product.description.toLowerCase().includes(searchLower) ||
+          (product.category?.toLowerCase() || "").includes(searchLower)
+      );
+    }
+
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(
+        (product) =>
+          (product.category?.toLowerCase() || "") === selectedCategory
+      );
+    }
+
+    // to do: sort option should be there when searchTerm is provided
+    switch (sortOption) {
+      case "price-asc":
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case "name-asc":
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [products, selectedCategory, sortOption, searchTerm]);
+
+  return (
+    <>
+      {!searchTerm && (
+        <section className="text-center py-4 space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+            ShopAhora
+          </h1>
+
+          <p className="max-w-xl mx-auto text-base text-muted-foreground sm:text-md font-semibold">
+            Discover our curated collection of minimalist products.
+          </p>
+
+          <Carousel
+            className="w-[95%] sm:h-[280px] md:h-[420px] mx-auto mt-12"
+            plugins={[plugin.current]}
+            onMouseEnter={plugin.current.stop}
+            onMouseLeave={plugin.current.reset}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            <div className="h-full overflow-hidden flex items-center rounded-sm">
+              <CarouselContent>
+                {highlightedProducts.map((product, index) => (
+                  <CarouselItem key={index}>
+                    <Link href={`/products/${product._id}`}>
+                      {product.highlight && (
+                        <img
+                          src={product.highlight}
+                          alt={product.name}
+                          className="w-full object-cover"
+                          onError={() => {
+                            console.error(
+                              "Image failed to load:",
+                              product.highlight
+                            );
+                          }}
+                        />
+                      )}
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </div>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </section>
+      )}
+
+      <section className="mx-auto lg:px-4 space-y-8">
+        {productsLoading ? (
+          <div className="flex justify-center items-center gap-2">
+            <Loader2Icon className="animate-spin" />
+            <h1 className="text-2xl font-semibold">Loading...</h1>
+          </div>
+        ) : (
+          <>
+            {!searchTerm && (
+              <h2 className="text-2xl font-semibold text-gray-800 text-center">
+                Our Products
+              </h2>
+            )}
+
+            <div
+              className={`flex flex-col sm:flex-row justify-between gap-4 mx-auto ${
+                searchTerm ? "w-full" : "max-w-4xl"
+              }`}
+            >
+              <Filter
+                categories={categories}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                sortOption={sortOption}
+                setSortOption={setSortOption}
+              />
+            </div>
+
+            {searchTerm && (
+              <h2 className="text-2xl font-semibold text-gray-800 text-left">
+                {`Search Results for "${searchTerm}" in ${upperCaseFirstLetter(
+                  selectedCategory
+                )}`}
+              </h2>
+            )}
+          </>
+        )}
+
+        {!productsLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredAndSortedProducts.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+
+            {filteredAndSortedProducts.length === 0 && (
+              <p className="col-span-full text-center mx-auto py-8 text-gray-500">
+                No products found. Try adjusting your search or filters.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+    </>
   );
 }
