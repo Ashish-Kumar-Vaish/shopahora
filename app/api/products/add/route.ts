@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Product from "@/models/Product";
+import prisma from "@/lib/prisma";
 import { getAuth } from "@clerk/nextjs/server";
 import authSeller from "@/services/authSeller";
 
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
     if (!isSeller) {
       return NextResponse.json(
         { success: false, message: "You are not a seller" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -42,11 +41,12 @@ export async function POST(request: NextRequest) {
     const stock = formData.get("stock");
     const colors = formData.getAll("colors");
     const sizes = formData.getAll("sizes");
+    const highlight = formData.get("highlight");
 
     if (!name || !price || !currency || !description || !stock) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,13 +55,13 @@ export async function POST(request: NextRequest) {
     if (!images || images.length === 0) {
       return NextResponse.json(
         { success: false, message: "Missing required images" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const result = await Promise.all(
-      images.map(async (images: any) => {
-        const arrayBuffer = await images.arrayBuffer();
+      images.map(async (img: any) => {
+        const arrayBuffer = await img.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
         return new Promise((resolve, reject) => {
@@ -73,40 +73,52 @@ export async function POST(request: NextRequest) {
               } else {
                 resolve(result);
               }
-            }
+            },
           );
 
           stream.end(buffer);
         });
-      })
+      }),
     );
 
-    await dbConnect();
-    
-    const imageUrls = result.map((result: any) => result.url);
+    const imageUrls = result.map((res: any) => res.url);
 
-    const newProduct = await Product.create({
-      name,
-      price: Number(price),
-      currency,
-      salePrice: salePrice ? Number(salePrice) : undefined,
-      description,
-      category,
-      stock,
-      colors,
-      sizes,
-      imageUrls,
+    const characteristicsRaw = formData.get("characteristics");
+    let characteristics = {};
+    if (characteristicsRaw) {
+      try {
+        characteristics = JSON.parse(characteristicsRaw as string);
+      } catch (e) {
+        console.warn("Failed to parse characteristics:", e);
+      }
+    }
+
+    const newProduct = await prisma.product.create({
+      data: {
+        name: name as string,
+        price: Math.round(Number(price) * 100) / 100,
+        currency: currency as string,
+        salePrice: salePrice ? Math.round(Number(salePrice) * 100) / 100 : null,
+        description: description as string,
+        category: category as string,
+        stock: Number(stock),
+        colors: colors as string[],
+        sizes: sizes as string[],
+        imageUrls: imageUrls as string[],
+        characteristics: characteristics as Record<string, any>,
+        highlight: highlight as string,
+      },
     });
 
     return NextResponse.json(
       { success: true, data: { newProduct } },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("POST /api/products/add error:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

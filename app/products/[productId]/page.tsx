@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/contexts/AppContext";
-import { ProductType } from "@/models/Product";
+import { ProductType } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon, ShoppingCart } from "lucide-react";
 
@@ -21,7 +21,7 @@ const ProductPage = ({
   useEffect(() => {
     if (productsLoading) return;
 
-    const foundProduct = products.find((p) => p._id === productId) || null;
+    const foundProduct = products.find((p) => p.id === productId) || null;
 
     if (foundProduct) {
       setProduct(foundProduct);
@@ -164,7 +164,7 @@ const ProductPage = ({
               )}
 
               <Button
-                onClick={() => addToCart(product._id)}
+                onClick={() => addToCart(product.id)}
                 className="w-full md:w-auto"
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />

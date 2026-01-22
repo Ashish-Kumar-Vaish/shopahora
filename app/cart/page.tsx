@@ -71,7 +71,7 @@ const Cart = () => {
 
                 <tbody className="bg-white divide-y divide-gray-200">
                   {Object.keys(cartItems).map((itemId) => {
-                    const product = products.find((p) => p._id === itemId);
+                    const product = products.find((p) => p.id === itemId);
                     const quantity = cartItems[itemId];
 
                     if (!product || cartItems[itemId] <= 0) {
@@ -79,11 +79,11 @@ const Cart = () => {
                     }
 
                     return (
-                      <tr key={product._id} className="hover:bg-gray-50">
+                      <tr key={product.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-between">
                             <Link
-                              href={`/products/${product._id}`}
+                              href={`/products/${product.id}`}
                               className="block mr-4"
                             >
                               <div className="flex items-center cursor-pointer">
@@ -108,7 +108,7 @@ const Cart = () => {
 
                             <Button
                               value="outline"
-                              onClick={() => updateCartQuantity(product._id, 0)}
+                              onClick={() => updateCartQuantity(product.id, 0)}
                             >
                               <Trash />
                             </Button>
@@ -119,8 +119,8 @@ const Cart = () => {
                           <button
                             onClick={() =>
                               updateCartQuantity(
-                                product._id,
-                                cartItems[itemId] - 1
+                                product.id,
+                                cartItems[itemId] - 1,
                               )
                             }
                           >
@@ -130,8 +130,8 @@ const Cart = () => {
                           <input
                             onChange={(e) =>
                               updateCartQuantity(
-                                product._id,
-                                Number(e.target.value)
+                                product.id,
+                                Number(e.target.value),
                               )
                             }
                             type="number"
@@ -139,7 +139,7 @@ const Cart = () => {
                             className="w-16 border text-center no-spinner outline-none"
                           ></input>
 
-                          <button onClick={() => addToCart(product._id)}>
+                          <button onClick={() => addToCart(product.id)}>
                             <Triangle className="rotate-90 w-3 h-3" />
                           </button>
                         </td>

@@ -1,5 +1,5 @@
 import { getProducts } from "@/services/getProducts";
-import { ProductType } from "@/models/Product";
+import { ProductType } from "@/types/product";
 
 const Categories = async () => {
   const products: ProductType[] = await getProducts();

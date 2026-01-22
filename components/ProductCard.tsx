@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ProductType } from "@/models/Product";
+import { ProductType } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
+} from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
@@ -26,13 +26,16 @@ const ProductCard = ({ product }: { product: ProductType }) => {
       : null;
 
   const discountPercentage = (product: ProductType) => {
-    if (!product.salePrice || !product.price) return 0;
+    if (!product.salePrice || !product.price) {
+      return 0;
+    }
+
     return ((product.price - product.salePrice) / product.price) * 100;
   };
 
   return (
     <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden rounded-sm">
-      <Link href={`/products/${product._id}`} className="block">
+      <Link href={`/products/${product.id}`} className="block">
         <CardHeader className="p-0">
           <div className="relative aspect-[4/3] w-full">
             {imageUrl && !imageError ? (
@@ -91,7 +94,7 @@ const ProductCard = ({ product }: { product: ProductType }) => {
 
       <CardFooter className="pb-4">
         <Button
-          onClick={() => addToCart(product._id)}
+          onClick={() => addToCart(product.id)}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <ShoppingCart className="mr-2 h-4 w-4" />

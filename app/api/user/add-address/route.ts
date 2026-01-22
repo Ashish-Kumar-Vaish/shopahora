@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
 import { getAuth } from "@clerk/nextjs/server";
-import Address from "@/models/Address";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -19,26 +18,37 @@ export async function POST(request: NextRequest) {
     if (!addressData) {
       return NextResponse.json(
         { success: false, message: "Missing address data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    await dbConnect();
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
 
-    const address = await Address.create({
-      userId,
-      ...addressData,
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 },
+      );
+    }
+
+    const address = await prisma.address.create({
+      data: {
+        userId: user.id,
+        ...addressData,
+      },
     });
 
     return NextResponse.json(
       { success: true, data: { address } },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
     console.error("POST /api/user/add-address error:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

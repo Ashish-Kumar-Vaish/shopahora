@@ -37,9 +37,5 @@ const ProductSchema = new mongoose.Schema({
   },
 });
 
-export type ProductType = mongoose.InferSchemaType<typeof ProductSchema> & {
-  _id: string;
-};
-
 export default mongoose.models.Product ||
   mongoose.model("Product", ProductSchema);

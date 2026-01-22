@@ -35,9 +35,5 @@ const AddressSchema = new mongoose.Schema({
   },
 });
 
-export type AddressType = mongoose.InferSchemaType<typeof AddressSchema> & {
-  _id: string;
-};
-
 export default mongoose.models.Address ||
   mongoose.model("Address", AddressSchema);

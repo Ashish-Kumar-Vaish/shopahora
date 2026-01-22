@@ -33,15 +33,18 @@ const AddAddress = () => {
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/add-address`,
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             addressData: address,
           }),
-        }
+        },
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         toast.success("Address added successfully");
         router.push("/cart");
       } else {

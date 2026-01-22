@@ -1,13 +1,15 @@
 # Shop Ahora
 
-Shop Ahora is a shopping store that allows users to browse and purchase products. The app is built using Next.js, Tailwind CSS for styling, Shadcn UI for UI components, MongoDB for database management, Clerk for authentication and authorization, and Cloudinary for image storage.
+Shop Ahora is a shopping store that allows users to browse and purchase products. The app is built using Next.js, Tailwind CSS for styling, Shadcn UI for UI components, PostgreSQL and Prisma for database management, Clerk for authentication and authorization, and Cloudinary for image storage.
 
 ## Tech Stack
 
 - Next.js
 - Tailwind CSS
 - Shadcn UI
-- MongoDB
+- PostgreSQL
+- Prisma
+- MongoDB (Previously used for database, but now using PostgreSQL)
 - Clerk
 - Cloudinary
 
@@ -25,6 +27,7 @@ Create a `.env` file in the root directory of the project and add the following 
 
 - `NEXT_PUBLIC_BASE_URL`: The base URL of the application
 - `MONGODB_URI`: The URI for your MongoDB database
+- `DATABASE_URL`: The URL for your PostgreSQL database
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Your Clerk publishable key
 - `CLERK_SECRET_KEY`: Your Clerk secret key
 - `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL`: The URL to redirect to after signing up
@@ -32,10 +35,6 @@ Create a `.env` file in the root directory of the project and add the following 
 - `CLOUDINARY_API_KEY`: Your Cloudinary API key
 - `CLOUDINARY_API_SECRET`: Your Cloudinary API secret
 - `NEXT_PUBLIC_CURRENCY`: The currency to use for the application (default is USD)
-
-## Deployment
-
-To deploy the application, you can use any hosting service that supports Node.js and MongoDB.
 
 ## Screenshots
 
@@ -51,3 +50,9 @@ To deploy the application, you can use any hosting service that supports Node.js
 ## Contributing
 
 Contributions are welcome! If you find a bug or have a suggestion, please open an issue or submit a pull request.
+
+## Future Improvements
+
+- Stripe integration for payment processing
+- Redis caching for faster database queries
+- Admin analytics dashboard

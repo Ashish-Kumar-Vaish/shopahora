@@ -1,28 +1,28 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Product from "@/models/Product";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    await dbConnect();
-    const products = await Product.find({}).sort({ name: 1 }).lean();
+    const products = await prisma.product.findMany({
+      orderBy: { name: "asc" },
+    });
 
     if (!products || products.length === 0) {
       return NextResponse.json(
         { success: false, message: "No products found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { success: true, data: { products } },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("GET /api/products/list error:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

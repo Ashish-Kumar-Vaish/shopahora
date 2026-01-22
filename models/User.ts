@@ -21,11 +21,7 @@ const UserSchema = new mongoose.Schema(
       default: {},
     },
   },
-  { minimize: false }
+  { minimize: false },
 );
-
-export type UserType = mongoose.InferSchemaType<typeof UserSchema> & {
-  _id: string;
-};
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

@@ -2,8 +2,8 @@
 
 import { useAppContext } from "@/contexts/AppContext";
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-import { AddressType } from "@/models/Address";
+import { Button } from "@/components/ui/button";
+import { AddressType } from "@/types/address";
 import { useRouter } from "next/navigation";
 import { ChevronDownIcon, ChevronUpIcon, PlusCircleIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ const OrderSummary = () => {
   const { getCartCount, getCartAmount, user, cartItems, setCartItems } =
     useAppContext();
   const [selectedAddress, setSelectedAddress] = useState<AddressType | null>(
-    null
+    null,
   );
   const [userAddresses, setUserAddresses] = useState<AddressType[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -21,13 +21,14 @@ const OrderSummary = () => {
   const fetchUserAddresses = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/get-address`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/get-address`,
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setUserAddresses(data.data.addresses);
+
         if (data.data.addresses.length > 0) {
           setSelectedAddress(data.data.addresses[0]);
         }
@@ -78,15 +79,15 @@ const OrderSummary = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            address: selectedAddress._id,
+            address: selectedAddress.id,
             items: itemsArray,
           }),
-        }
+        },
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setCartItems({});
         router.push("/order-placed");
         toast.success("Order placed successfully!");

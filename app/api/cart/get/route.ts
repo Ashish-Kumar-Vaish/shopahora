@@ -1,8 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
-import dbConnect from "@/lib/mongodb";
 import { getAuth } from "@clerk/nextjs/server";
-import User from "@/models/User";
-import Product, { ProductType } from "@/models/Product";
+import prisma from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,45 +9,43 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    await dbConnect();
-
-    const user = await User.findOne({ clerkId: userId });
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+      include: {
+        cartItems: {
+          include: {
+            productRef: true,
+          },
+        },
+      },
+    });
 
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    const cartProducts: { product: ProductType; quantity: number }[] = [];
-
-    for (const cartItem in user.cartItems) {
-      const product = await Product.findOne({ _id: cartItem });
-
-      if (product) {
-        cartProducts.push({
-          product,
-          quantity: user.cartItems[cartItem],
-        });
-      } else {
-        console.error("Product not found:", cartItem);
-      }
-    }
+    // Transform cartItems array to object format { productId: quantity }
+    const cartItemsMap: Record<string, number> = {};
+    user.cartItems.forEach((item: any) => {
+      cartItemsMap[item.product] = item.quantity;
+    });
 
     return NextResponse.json(
-      { success: true, data: { cartProducts: cartProducts } },
-      { status: 200 }
+      { success: true, data: { cartItems: cartItemsMap } },
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("GET /api/cart/get error:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

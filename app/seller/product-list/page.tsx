@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "@/contexts/AppContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ProductType } from "@/models/Product";
+import { ProductType } from "@/types/product";
 import { ArrowUpRightIcon, Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -19,12 +19,12 @@ const ProductList = () => {
       setLoading(true);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/seller-list`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/seller-list`,
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setProducts(data.data.products);
       } else {
         toast.error("Failed to fetch products: " + data.message);
@@ -73,7 +73,7 @@ const ProductList = () => {
 
           <tbody className="bg-white divide-y divide-gray-200">
             {products.map((product) => (
-              <tr key={product._id} className="hover:bg-gray-50">
+              <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="h-16 w-16 relative">
                     {product.imageUrls && product.imageUrls.length > 0 ? (
@@ -110,7 +110,7 @@ const ProductList = () => {
                     variant="outline"
                     size="sm"
                     className="mr-2"
-                    onClick={() => router.push(`/products/${product._id}`)}
+                    onClick={() => router.push(`/products/${product.id}`)}
                   >
                     Visit
                     <ArrowUpRightIcon className="ml-1 h-4 w-4" />

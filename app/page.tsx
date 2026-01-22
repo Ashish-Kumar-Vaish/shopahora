@@ -50,11 +50,11 @@ export default function Home() {
         products
           .map((product) => product.category)
           .filter(
-            (category): category is string => typeof category === "string"
+            (category): category is string => typeof category === "string",
             // ensure category is a string
             // and not undefined or null
-          )
-      )
+          ),
+      ),
     );
 
     return ["All", ...uniqueCategories];
@@ -71,14 +71,14 @@ export default function Home() {
         (product) =>
           product.name.toLowerCase().includes(searchLower) ||
           product.description.toLowerCase().includes(searchLower) ||
-          (product.category?.toLowerCase() || "").includes(searchLower)
+          (product.category?.toLowerCase() || "").includes(searchLower),
       );
     }
 
     if (selectedCategory !== "all") {
       filtered = filtered.filter(
         (product) =>
-          (product.category?.toLowerCase() || "") === selectedCategory
+          (product.category?.toLowerCase() || "") === selectedCategory,
       );
     }
 
@@ -125,7 +125,7 @@ export default function Home() {
               <CarouselContent>
                 {highlightedProducts.map((product, index) => (
                   <CarouselItem key={index}>
-                    <Link href={`/products/${product._id}`}>
+                    <Link href={`/products/${product.id}`}>
                       {product.highlight && (
                         <img
                           src={product.highlight}
@@ -134,7 +134,7 @@ export default function Home() {
                           onError={() => {
                             console.error(
                               "Image failed to load:",
-                              product.highlight
+                              product.highlight,
                             );
                           }}
                         />
@@ -181,7 +181,7 @@ export default function Home() {
             {searchTerm && (
               <h2 className="text-2xl font-semibold text-gray-800 text-left">
                 {`Search Results for "${searchTerm}" in ${upperCaseFirstLetter(
-                  selectedCategory
+                  selectedCategory,
                 )}`}
               </h2>
             )}
@@ -191,7 +191,7 @@ export default function Home() {
         {!productsLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredAndSortedProducts.map((product) => (
-              <ProductCard key={product._id} product={product} />
+              <ProductCard key={product.id} product={product} />
             ))}
 
             {filteredAndSortedProducts.length === 0 && (

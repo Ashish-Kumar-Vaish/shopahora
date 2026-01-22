@@ -39,8 +39,4 @@ const OrderSchema = new mongoose.Schema({
   },
 });
 
-export type OrderType = mongoose.InferSchemaType<typeof OrderSchema> & {
-  _id: string;
-};
-
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

@@ -1,8 +1,7 @@
 import { getAuth } from "@clerk/nextjs/server";
 import authSeller from "@/services/authSeller";
 import { NextRequest, NextResponse } from "next/server";
-import Product from "@/models/Product";
-import dbConnect from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +10,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -20,29 +19,30 @@ export async function GET(request: NextRequest) {
     if (!isSeller) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    await dbConnect();
-    const products = await Product.find({});
+    const products = await prisma.product.findMany({
+      orderBy: { name: "asc" },
+    });
 
     if (!products || products.length === 0) {
       return NextResponse.json(
         { success: false, message: "No products found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { success: true, data: { products } },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     console.error("GET /api/products/seller-list error:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

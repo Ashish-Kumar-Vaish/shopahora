@@ -1,8 +1,8 @@
 "use client";
 
-import { ProductType } from "@/models/Product";
-import { UserType } from "@/models/User";
-import { useAuth, useUser, useClerk } from "@clerk/nextjs";
+import { ProductType } from "@/types/product";
+import { UserType } from "@/types/user";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -40,7 +40,6 @@ export const useAppContext = () => {
 export const AppContextProvider = (props: { children: React.ReactNode }) => {
   const router = useRouter();
   const { user } = useUser();
-  const { getToken } = useAuth();
   const { signOut } = useClerk();
 
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -56,12 +55,12 @@ export const AppContextProvider = (props: { children: React.ReactNode }) => {
       setProductsLoading(true);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/list`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/list`,
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setProducts(data.data.products);
       } else {
         toast.error("Failed to fetch products: " + data.message);
@@ -84,22 +83,13 @@ export const AppContextProvider = (props: { children: React.ReactNode }) => {
         setIsSeller(true);
       }
 
-      const token = await getToken();
-
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/user/data`,
-        {
-          headers: {
-            // Clerk will automatically handle the Authorization header
-            // in the api/user/data route
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setUserData(data.data.user);
         setCartItems(data.data.user.cartItems);
       } else {
@@ -133,22 +123,20 @@ export const AppContextProvider = (props: { children: React.ReactNode }) => {
 
     if (user) {
       try {
-        const token = await getToken();
-
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/cart/update`,
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({ cartData }),
-          }
+          },
         );
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.success) {
           toast.success("Item added to cart");
         } else {
           toast.error("Failed to add item to cart: " + data.message);
@@ -172,22 +160,20 @@ export const AppContextProvider = (props: { children: React.ReactNode }) => {
 
     if (user) {
       try {
-        const token = await getToken();
-
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/cart/update`,
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({ cartData }),
-          }
+          },
         );
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.success) {
           toast.success("Cart updated");
         } else {
           toast.error("Failed to add item to cart: " + data.message);
@@ -212,7 +198,7 @@ export const AppContextProvider = (props: { children: React.ReactNode }) => {
     let totalAmount = 0;
 
     for (const items in cartItems) {
-      let itemInfo = products.find((product) => product._id === items);
+      let itemInfo = products.find((product) => product.id === items);
 
       if (itemInfo && cartItems[items] > 0) {
         totalAmount += itemInfo.price * cartItems[items];

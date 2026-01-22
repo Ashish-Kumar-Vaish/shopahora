@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+model User {
+  id      String @id @default(cuid())
+  clerkId String @unique
+  name    String
+  email   String @unique
+
+  cartItems CartItem[]
+  orders    Order[]
+  addresses Address[]
+
+  createdAt DateTime @default(now())
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName    String
+  phoneNumber String
+  area        String
+  city        String
+  state       String
+  zipCode     String
+  country     String
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  price       Int
+  currency    String
+  salePrice   Int?
+  description String
+  category    String?
+  stock       Int?
+
+  imageUrls String[]
+  colors    String[]
+  sizes     String[]
+
+  characteristics Json?
+  highlight       String?
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@index([category])
+  @@index([price])
+}
+
+model Order {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+
+  amount     Int
+  address    String
+  addressRef Address @relation(fields: [address], references: [id])
+
+  status OrderStatus @default(pending)
+  date   DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([date])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  product String
+
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productRef Product @relation(fields: [product], references: [id])
+
+  quantity Int
+
+  @@index([orderId])
+  @@index([product])
+}
+
+model CartItem {
+  userId   String
+  product  String
+  quantity Int
+
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productRef Product @relation(fields: [product], references: [id])
+
+  @@unique([userId, product])
+}
