@@ -62,6 +62,9 @@ async function migrate() {
     orders: { total: 0, successes: 0, failures: 0 },
   };
 
+  // Map to store prices for historical order item generation
+  const productPriceMap = new Map<string, number>();
+
   try {
     console.log("--- Migrating Users ---");
     const users = await User.find();
@@ -119,7 +122,6 @@ async function migrate() {
           console.warn(
             `Skipping address ${a._id} — user ${mongoUserId} not found in Postgres`,
           );
-
           stats.addresses.failures++;
           continue;
         }
@@ -159,9 +161,9 @@ async function migrate() {
       try {
         const productData = {
           name: p.name,
-          price: Math.round(p.price * 100) / 100,
-          salePrice: p.salePrice ? Math.round(p.salePrice * 100) / 100 : null,
-          currency: p.currency,
+          price: Math.round(p.price),
+          salePrice: p.salePrice ? Math.round(p.salePrice) : null,
+          currency: p.currency || "USD",
           description: p.description,
           category: p.category,
           imageUrls: p.imageUrls ?? [],
@@ -169,8 +171,12 @@ async function migrate() {
           sizes: p.sizes ?? [],
           characteristics: p.characteristics || {},
           stock: p.stock ?? 0,
+          isActive: p.isActive ?? true,
           highlight: p.highlight,
         };
+
+        // Save to map for OrderItems later
+        productPriceMap.set(p._id.toString(), p.salePrice || p.price);
 
         await prisma.product.upsert({
           where: { id: p._id.toString() },
@@ -208,15 +214,15 @@ async function migrate() {
             console.warn(
               `Skipping cart item for user ${u._id}: product ${productId} not found`,
             );
-
             continue;
           }
 
+          // UPDATED: Using userId_productId and productId
           await prisma.cartItem.upsert({
             where: {
-              userId_product: {
+              userId_productId: {
                 userId: u._id.toString(),
-                product: productId,
+                productId: productId,
               },
             },
             update: {
@@ -224,7 +230,7 @@ async function migrate() {
             },
             create: {
               userId: u._id.toString(),
-              product: productId,
+              productId: productId,
               quantity: Number(quantity),
             },
           });
@@ -251,37 +257,40 @@ async function migrate() {
           console.warn(
             `Skipping order ${o._id} - user ${o.userId} not found in MongoDB mapping`,
           );
-
           stats.orders.failures++;
           continue;
         }
 
-        const [userExists, addressExists] = await Promise.all([
-          prisma.user.findUnique({
-            where: { id: mongoUserId },
-            select: { id: true },
-          }),
-          prisma.address.findUnique({
-            where: { id: o.address },
-            select: { id: true },
-          }),
-        ]);
+        const userExists = await prisma.user.findUnique({
+          where: { id: mongoUserId },
+          select: { id: true },
+        });
 
-        if (!userExists || !addressExists) {
-          console.warn(
-            `Skipping order ${o._id}: User/Address dependency missing`,
-          );
+        // UPDATED: Fetch full address details from Mongo to create the JSON snapshot
+        const addressDetails = await Address.findById(o.address);
 
+        if (!userExists || !addressDetails) {
+          console.warn(`Skipping order ${o._id}: User or Address data missing`);
           stats.orders.failures++;
           continue;
         }
 
+        // UPDATED: Build the new Order object structure
         const orderData = {
           userId: mongoUserId,
-          address: o.address,
-          amount: Math.round(o.amount * 100) / 100,
+          totalAmount: Math.round(o.amount),
+          currency: "USD", // Defaulting to USD, adjust if you had dynamic currencies per order
           status: o.status as any,
-          date: o.date,
+          createdAt: o.date, // Preserving your original Mongo date
+          addressSnapshot: {
+            fullName: addressDetails.fullName,
+            phoneNumber: addressDetails.phoneNumber,
+            area: addressDetails.area,
+            city: addressDetails.city,
+            state: addressDetails.state,
+            zipCode: addressDetails.zipCode,
+            country: addressDetails.country,
+          },
         };
 
         await prisma.$transaction(async (tx: any) => {
@@ -299,11 +308,17 @@ async function migrate() {
             const productIdStr = item.product.toString();
 
             if (postgresProductIds.has(productIdStr)) {
+              // Fetch historical price from our map
+              const unitPrice = productPriceMap.get(productIdStr) || 0;
+
+              // UPDATED: Mapping to productId, unitPrice, and currency
               await tx.orderItem.create({
                 data: {
                   orderId: o._id.toString(),
-                  product: productIdStr,
+                  productId: productIdStr,
                   quantity: item.quantity,
+                  unitPrice: Math.round(unitPrice),
+                  currency: "USD",
                 },
               });
             } else {

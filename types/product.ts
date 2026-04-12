@@ -10,6 +10,9 @@ export interface ProductType {
   colors: string[];
   sizes: string[];
   stock: number;
+  isActive: boolean;
   characteristics?: Record<string, any> | null;
   highlight?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -1,5 +1,3 @@
-import { OrderType } from "./order";
-
 export type AddressType = {
   id: string;
   userId: string;
@@ -10,6 +8,5 @@ export type AddressType = {
   state: string;
   zipCode: string;
   country: string;
-  orders: OrderType[];
   createdAt: Date;
 };

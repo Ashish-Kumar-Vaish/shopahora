@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       include: {
         cartItems: {
           include: {
-            productRef: true,
+            product: true,
           },
         },
       },

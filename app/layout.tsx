@@ -41,6 +41,7 @@ export default function RootLayout({
               {children}
             </main>
           </AppContextProvider>
+          
           <Footer />
           <Toaster expand={true} />
         </body>

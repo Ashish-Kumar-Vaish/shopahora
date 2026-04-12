@@ -12,25 +12,22 @@ import {
   ShoppingCartIcon,
   ShoppingBagIcon,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignedOut, useClerk, SignedIn, UserButton } from "@clerk/nextjs";
 import { LayoutDashboard } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
 
-const Navbar = () => {
+function SearchInput() {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { openSignIn } = useClerk();
-  const { isSeller, getCartCount } = useAppContext();
-  const itemCount = getCartCount();
 
   useEffect(() => {
     if (searchParams) {
       setSearchTerm(searchParams.get("search") || "");
     }
-  }, []);
+  }, [searchParams]);
 
   const handleInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -45,6 +42,76 @@ const Navbar = () => {
   };
 
   return (
+    <div className="flex w-full gap-2 sm:max-w-[60%] md:max-w-[45%] mx-2">
+      <div className="relative flex-grow">
+        <Input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleInputKeyPress}
+          className="w-full border-gray-400 focus:border-gray-500 pr-8 focus-visible:ring-[2px]"
+        />
+
+        {searchTerm && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setSearchTerm("");
+            }}
+            className="hidden sm:block absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-500"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Clear search</span>
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          onClick={handleSearch}
+          size="icon"
+          className="sm:hidden absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-500"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Button onClick={handleSearch} className="hidden sm:flex">
+        <Search className="h-4 w-4" />
+        <span>Search</span>
+      </Button>
+    </div>
+  );
+}
+
+const Navbar = () => {
+  // const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  // const searchParams = useSearchParams();
+  const { openSignIn } = useClerk();
+  const { isSeller, getCartCount } = useAppContext();
+  const itemCount = getCartCount();
+
+  // useEffect(() => {
+  //   if (searchParams) {
+  //     setSearchTerm(searchParams.get("search") || "");
+  //   }
+  // }, []);
+
+  // const handleInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //   if (e.key === "Enter") {
+  //     handleSearch();
+  //   }
+  // };
+
+  // const handleSearch = () => {
+  //   if (searchTerm.trim()) {
+  //     router.push(`/?search=${encodeURIComponent(searchTerm.trim())}`);
+  //   }
+  // };
+
+  return (
     <nav className="sticky top-0 z-50 w-full px-4 md:px-8 py-4 text-gray-800 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="flex justify-between items-center gap-1">
         <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -54,7 +121,21 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="flex w-full gap-2 sm:max-w-[60%] md:max-w-[45%] mx-2">
+        <Suspense
+          fallback={
+            <div className="flex w-full gap-2 sm:max-w-[60%] md:max-w-[45%] mx-2">
+              <Input
+                disabled
+                placeholder="Loading search..."
+                className="w-full"
+              />
+            </div>
+          }
+        >
+          <SearchInput />
+        </Suspense>
+
+        {/* <div className="flex w-full gap-2 sm:max-w-[60%] md:max-w-[45%] mx-2">
           <div className="relative flex-grow">
             <Input
               type="text"
@@ -93,7 +174,7 @@ const Navbar = () => {
             <Search className="h-4 w-4" />
             <span>Search</span>
           </Button>
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-4">
           <Link href="/cart">

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const cartItemsToCreate = Object.entries(cartData).map(
       ([productId, quantity]) => ({
         userId: user.id,
-        product: productId,
+        productId: productId,
         quantity: quantity as number,
       }),
     );

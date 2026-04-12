@@ -1,4 +1,3 @@
-import { AddressType } from "./address";
 import { ProductType } from "./product";
 
 export type OrderType = {
@@ -7,9 +6,18 @@ export type OrderType = {
   items: {
     product: ProductType;
     quantity: number;
+    unitPrice: number;
   }[];
   amount: number;
-  address: AddressType;
+  address: {
+    fullName: string;
+    phoneNumber: string;
+    area: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   status: string;
   date: Date;
   createdAt: Date;

@@ -25,10 +25,9 @@ export async function GET(request: NextRequest) {
 
     const orders = await prisma.order.findMany({
       include: {
-        addressRef: true,
         items: {
           include: {
-            productRef: true,
+            product: true,
           },
         },
       },
@@ -40,13 +39,14 @@ export async function GET(request: NextRequest) {
     // Transform orders to match expected structure
     const transformedOrders = orders.map((order) => ({
       id: order.id,
-      date: order.date,
-      amount: order.amount,
+      date: order.createdAt,
+      amount: order.totalAmount,
       status: order.status,
-      address: order.addressRef,
+      address: order.addressSnapshot,
       items: order.items.map((item) => ({
         quantity: item.quantity,
-        product: item.productRef,
+        product: item.product,
+        unitPrice: item.unitPrice,
       })),
     }));
 

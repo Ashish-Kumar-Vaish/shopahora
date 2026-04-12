@@ -30,7 +30,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const productPrices = await Promise.all(
+    const userAddress = await prisma.address.findUnique({
+      where: { id: address },
+    });
+
+    if (!userAddress) {
+      return NextResponse.json(
+        { success: false, message: "Selected address not found" },
+        { status: 404 },
+      );
+    }
+
+    const addressSnapshot = {
+      fullName: userAddress.fullName,
+      phoneNumber: userAddress.phoneNumber,
+      area: userAddress.area,
+      city: userAddress.city,
+      state: userAddress.state,
+      zipCode: userAddress.zipCode,
+      country: userAddress.country,
+    };
+
+    const enrichedItems = await Promise.all(
       items.map(async (item: any) => {
         const product = await prisma.product.findUnique({
           where: { id: item.productId },
@@ -40,25 +61,38 @@ export async function POST(request: NextRequest) {
           throw new Error(`Product with ID ${item.productId} not found`);
         }
 
-        return (product.salePrice || product.price) * item.quantity;
+        const currentPrice = product.salePrice || product.price;
+
+        return {
+          productId: product.id,
+          quantity: item.quantity,
+          unitPrice: currentPrice,
+          totalLinePrice: currentPrice * item.quantity,
+        };
       }),
     );
 
-    const amount = productPrices.reduce((total, price) => total + price, 0);
+    const subtotal = enrichedItems.reduce(
+      (total, item) => total + item.totalLinePrice,
+      0,
+    );
 
-    // Use transaction for Order + OrderItems + Cart Clearance
+    const finalTotalAmount = subtotal + Math.round(subtotal * 0.02);
+
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           userId: user.id,
-          amount: amount + Math.floor(amount * 0.02),
-          address: address,
+          totalAmount: finalTotalAmount,
+          currency: "USD",
+          addressSnapshot: addressSnapshot,
           status: "pending",
-          date: new Date(),
           items: {
-            create: items.map((item: any) => ({
-              product: item.productId,
+            create: enrichedItems.map((item) => ({
+              productId: item.productId,
               quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              currency: "USD",
             })),
           },
         },
